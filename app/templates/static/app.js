@@ -22,7 +22,7 @@ class Template {
       }
 
       addWeather(data){
-            return `<p>${data["description"]} ${data["temperature"]}</p>`
+            return `<p>${data["description"]} ${data["temperature"]}</p>`;
       }
 
 }
@@ -54,7 +54,7 @@ class View {
                   name: this.template.nameElement.value,
                   description: this.template.descriptionElement.value,
                   status: this.template.statusElement.value
-            }
+            };
       }
 
       clearTaskData(){
@@ -80,7 +80,7 @@ class Store {
 
       async getWeather(latitude, longitude){
             const method = "GET";
-            const url = this.weather_url + `?latitude=${latitude}&longitude=${longitude}`
+            const url = this.weather_url + `?latitude=${latitude}&longitude=${longitude}`;
             const response = await fetch(url, {method});
             await this._logProcessTime(response, method);
             return await response.json();
@@ -91,11 +91,11 @@ class Store {
             const response = await fetch(this.url, {method});
             await this._logProcessTime(response, method);
             const tasks = await response.json();
-            return tasks
+            return tasks;
       }
 
       async addTask(task){
-            const method = "POST"
+            const method = "POST";
             const response = await fetch(
                   this.url,
                   {
@@ -107,22 +107,22 @@ class Store {
                   });
             await this._logProcessTime(response, method);
             const taskResponce = await response.json();
-            return taskResponce
+            return taskResponce;
       }
 
       async deleteTask(id){
-            const method = "DELETE"
-            const response = await fetch(this.url+"/"+id, {method})
+            const method = "DELETE";
+            const response = await fetch(this.url+"/"+id, {method});
             await this._logProcessTime(response, method);
       }
 
       async _logProcessTime(response, method) {
-            const processTime = await response.headers.get('X-Process-Time');
+            const processTime = await response.headers.get("X-Process-Time");
             console.table(method, response.url, processTime);
             const timeTable = document.getElementById("time-table");
             let style = "";
             if (processTime > 500){
-                  style = 'style="background-color: brown;"';
+                  style = "style=\"background-color: brown;\"";
             }
             timeTable.innerHTML += `<tr ${style}>
             <td>${method}</td>
@@ -146,17 +146,17 @@ class TestStore {
 	}
 
       async getTasks(){
-            return this.tasks
+            return this.tasks;
       }
 
       async addTask(task){
             task["id"]=this.tasks.length+1;
             this.tasks.push(task);
-            return task
+            return task;
       }
 
       async deleteTask(id){
-            this.tasks = this.tasks.filter((task) => task.id !== parseInt(id))
+            this.tasks = this.tasks.filter((task) => task.id !== parseInt(id));
       }
 
       async getWeather(latitude, longitude){
@@ -164,7 +164,7 @@ class TestStore {
                   "status": "ok",
                   "description": "overcast clouds",
                   "temperature": 298.42
-            }
+            };
       }
 }
 
@@ -174,13 +174,13 @@ class Controller {
 		this.store = store;
 		this.view = view;
             
-            this.deleteItem = this.deleteItem.bind(this)
+            this.deleteItem = this.deleteItem.bind(this);
 		view.addTaskEvent(this.addTask.bind(this));
-            view.getGeolocationEvent(this.getGeolocation.bind(this))
+            view.getGeolocationEvent(this.getGeolocation.bind(this));
             Promise.resolve(store.getTasks())
             .then((tasks) => {
                   for (const index in tasks){
-                        const task = tasks[index]
+                        const task = tasks[index];
                         this.view.addTask(task);
                         this.view.deleteTaskEvent(this.deleteItem, task.id);
                   }
@@ -193,7 +193,7 @@ class Controller {
             Promise.resolve(this.store.addTask(task))
             .then((task) => {
                   this.view.clearTaskData();
-                  this.addTaskItem(task)
+                  this.addTaskItem(task);
             });
 	}
 

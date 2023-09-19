@@ -1,24 +1,28 @@
+import json
 import time
 
-import requests
-from fastapi import BackgroundTasks, FastAPI, HTTPException, Request, Depends
+from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-from fastapi_utils.tasks import repeat_every
-from sqlmodel import select, Session
-from datetime import date
+from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
+import aioredis
 
 from app.db import get_session, init_db
 from app.models import Task, TaskCreate
-from app.config import ROOT, Settings, get_settings
+from app.config import ROOT, get_weather_key
+from app.tasks import get_weather as get_weather_task
 
-weather_cache = {}
+redis = aioredis.from_url("redis://localhost")
 
 app = FastAPI()
 
 
-app.mount("/static", StaticFiles(directory=f"{ROOT}/templates/static"), name="static")
+app.mount(
+    "/static",
+    StaticFiles(directory=f"{ROOT}/templates/static"),
+    name="static"
+)
 templates = Jinja2Templates(directory=f"{ROOT}/templates")
 
 
@@ -36,44 +40,6 @@ async def add_process_time_header(request: Request, call_next):
     return response
 
 
-@app.get("/weather")
-def get_weather(
-    latitude: float,
-    longitude: float,
-    background_tasks: BackgroundTasks,
-    settings: Settings = Depends(get_settings)
-):
-    global weather_cache
-    today = date.today()
-    key=f"{latitude}_{longitude}_{today}"
-    weather=weather_cache.get(key)
-    if weather is None:
-        weather_cache[key] = ...
-        background_tasks.add_task(cache_weather, key, latitude, longitude, settings.api_key)
-        return { "status": "start process" }
-    elif weather == ...:
-        return { "status": "processing" }
-    responce = {"status": "ok"}
-    responce.update(weather_cache[key])
-    return responce
-
-def cache_weather(key, latitude, longitude, api_key):
-    global weather_cache
-    response = requests.get(
-        "https://api.openweathermap.org/data/2.5/weather"
-        f"?lat={latitude}&lon={longitude}&appid={api_key}"
-    )
-    if response.status_code == 200:
-        data = response.json()
-        weather_cache[key] = {
-            "description": data["weather"][0]["description"],
-            "temperature": data["main"]["temp"]
-        }
-    else:
-        weather_cache[key] = None
-        print("Error")
-
-
 @app.get("/")
 def index(
     request: Request,
@@ -81,6 +47,22 @@ def index(
     return templates.TemplateResponse(
         "index.html", {"request": request, "title": "Task list"}
     )
+
+
+@app.get("/weather")
+async def get_weather(
+    latitude: float,
+    longitude: float
+):
+    key = get_weather_key(latitude, longitude)
+    weather_cache = await redis.get(key)
+    if weather_cache is None:
+        get_weather_task.delay(latitude, longitude)
+        return {"status": "start process"}
+
+    responce = {"status": "ok"}
+    responce.update(json.loads(weather_cache))
+    return responce
 
 
 @app.get("/tasks", response_model=list[Task])
@@ -91,7 +73,10 @@ async def get_tasks(session: AsyncSession = Depends(get_session)):
 
 
 @app.post("/tasks")
-async def add_task(task: TaskCreate, session: AsyncSession = Depends(get_session)):
+async def add_task(
+    task: TaskCreate,
+    session: AsyncSession = Depends(get_session)
+):
     task = Task.from_orm(task)
     session.add(task)
     await session.commit()
@@ -106,8 +91,12 @@ async def get_task(task_id: int, session: AsyncSession = Depends(get_session)):
         raise HTTPException(status_code=404, detail="Task not found")
     return task
 
+
 @app.delete("/tasks/{task_id}")
-async def delete_task(task_id: int, session: AsyncSession = Depends(get_session)):
+async def delete_task(
+    task_id: int,
+    session: AsyncSession = Depends(get_session)
+):
     task = await session.get(Task, task_id)
     if task is None:
         raise HTTPException(status_code=404, detail="Task not found")
