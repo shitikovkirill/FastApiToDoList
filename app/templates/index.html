@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div>
+    <form action="/action_page.php">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name"><br><br>
+        <label for="description">Description:</label>
+        <input type="text" id="description" name="description"><br><br>
+        <label for="status">Status:</label>
+        <select id="status" name="status">
+            <option value="completed">Completed</option>
+            <option value="not completed">Not completed</option>
+        </select><br><br>
+        <button id="add-task" type="button">Click Me!</button>
+    </form>
+</div>
+<div>
+    <h1>Tasks</h1>
+    <table id="tasks-table">
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Description</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </table>
+</div>
+<div>
+    <h1>Respons time</p>
+  <table id="time-table">
+    <tr>
+      <th>Post</th>
+      <th>Url</th>
+      <th>Time (ms)</th>
+    </tr>
+  </table>
+</div>
+<div id="weather">
+    <h1>Weather</h1>
+</div>
+{% endblock %}

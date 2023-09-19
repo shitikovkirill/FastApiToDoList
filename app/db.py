@@ -2,7 +2,7 @@ from sqlmodel import SQLModel
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
-sqlite_file_name = "database.db"
+sqlite_file_name = "database.sqlite"
 sqlite_url = f"sqlite+aiosqlite:///{sqlite_file_name}"
 engine = create_async_engine(sqlite_url, echo=True, future=True)
 
