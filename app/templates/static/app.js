@@ -161,6 +161,7 @@ class TestStore {
 
       async getWeather(latitude, longitude){
             return {
+                  "status": "ok",
                   "description": "overcast clouds",
                   "temperature": 298.42
             }
