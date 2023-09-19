@@ -230,7 +230,12 @@ class Controller {
                   position.coords.longitude
             ))
             .then((data) => {
-                  this.view.addWeather(data);
+                  if (data["status"] !== "ok"){
+                        console.log("repite");
+                        setTimeout(this.processGeolocation.bind(this), 1000, position);
+                  } else {
+                        this.view.addWeather(data);
+                  }
             });
       }
 }
