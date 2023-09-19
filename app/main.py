@@ -70,6 +70,7 @@ def cache_weather(key, latitude, longitude, api_key):
             "temperature": data["main"]["temp"]
         }
     else:
+        weather_cache[key] = None
         print("Error")
 
 
